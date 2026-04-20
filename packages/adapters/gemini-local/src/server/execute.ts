@@ -16,6 +16,7 @@ import {
   ensurePaperclipSkillSymlink,
   joinPromptSections,
   ensurePathInEnv,
+  injectHowCanIHelper,
   readPaperclipRuntimeSkillEntries,
   resolveCommandForLogs,
   resolvePaperclipDesiredSkillNames,
@@ -217,8 +218,15 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   if (!hasExplicitApiKey && authToken) {
     env.PAPERCLIP_API_KEY = authToken;
   }
+  const envWithHowCanI = (
+    await injectHowCanIHelper({
+      env,
+      moduleDir: __moduleDir,
+      workspaceCwd: cwd,
+    })
+  ).env;
   const effectiveEnv = Object.fromEntries(
-    Object.entries({ ...process.env, ...env }).filter(
+    Object.entries({ ...process.env, ...envWithHowCanI }).filter(
       (entry): entry is [string, string] => typeof entry[1] === "string",
     ),
   );
@@ -226,7 +234,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const runtimeEnv = ensurePathInEnv(effectiveEnv);
   await ensureCommandResolvable(command, cwd, runtimeEnv);
   const resolvedCommand = await resolveCommandForLogs(command, cwd, runtimeEnv);
-  const loggedEnv = buildInvocationEnvForLogs(env, {
+  const loggedEnv = buildInvocationEnvForLogs(envWithHowCanI, {
     runtimeEnv,
     includeRuntimeKeys: ["HOME"],
     resolvedCommand,
@@ -363,7 +371,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
 
     const proc = await runChildProcess(runId, command, args, {
       cwd,
-      env,
+      env: envWithHowCanI,
       timeoutSec,
       graceSec,
       onSpawn,

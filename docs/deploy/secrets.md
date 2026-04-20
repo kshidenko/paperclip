@@ -81,3 +81,20 @@ Agent environment variables use secret references:
 ```
 
 The server resolves and decrypts these at runtime, injecting the real value into the agent process environment.
+
+## Guardrail Service Secret Setup
+
+For production guardrail filtering, prefer a dedicated key:
+
+- `INBOUND_GUARDRAIL_GROQ_API_KEY` for `/api/guardrails/prefilter`
+- keep `GROQ_API_KEY` unset unless another service needs it
+
+Recommended rollout:
+
+1. Create a dedicated GROQ key with least privilege and low quota blast radius.
+2. Store it as an encrypted secret reference in Paperclip.
+3. Enable `PAPERCLIP_SECRETS_STRICT_MODE=true` in production.
+4. Inject only `INBOUND_GUARDRAIL_GROQ_API_KEY` into the server runtime.
+5. Rotate every 90 days or immediately on exposure.
+
+This isolates guardrail traffic and prevents shared-key coupling with unrelated model workloads.

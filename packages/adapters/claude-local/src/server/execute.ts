@@ -18,6 +18,7 @@ import {
   ensureAbsoluteDirectory,
   ensureCommandResolvable,
   ensurePathInEnv,
+  injectHowCanIHelper,
   resolveCommandForLogs,
   renderTemplate,
   renderPaperclipWakePrompt,
@@ -251,11 +252,18 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
   if (!hasExplicitApiKey && authToken) {
     env.PAPERCLIP_API_KEY = authToken;
   }
+  const envWithHowCanI = (
+    await injectHowCanIHelper({
+      env,
+      moduleDir: __moduleDir,
+      workspaceCwd: cwd,
+    })
+  ).env;
 
-  const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
+  const runtimeEnv = ensurePathInEnv({ ...process.env, ...envWithHowCanI });
   await ensureCommandResolvable(command, cwd, runtimeEnv);
   const resolvedCommand = await resolveCommandForLogs(command, cwd, runtimeEnv);
-  const loggedEnv = buildInvocationEnvForLogs(env, {
+  const loggedEnv = buildInvocationEnvForLogs(envWithHowCanI, {
     runtimeEnv,
     includeRuntimeKeys: ["HOME", "CLAUDE_CONFIG_DIR"],
     resolvedCommand,
@@ -276,7 +284,7 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
     workspaceId,
     workspaceRepoUrl,
     workspaceRepoRef,
-    env,
+    env: envWithHowCanI,
     loggedEnv,
     timeoutSec,
     graceSec,

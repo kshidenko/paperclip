@@ -29,6 +29,42 @@ console.log(JSON.stringify({ type: "turn.completed", usage: { input_tokens: 1, c
   await fs.chmod(commandPath, 0o755);
 }
 
+async function writeFakeCodexCommandThatCallsHowCanI(commandPath: string): Promise<void> {
+  const script = `#!/usr/bin/env node
+const fs = require("node:fs");
+const cp = require("node:child_process");
+
+const result = cp.spawnSync("how-can-i", ["where", "is", "policy"], {
+  encoding: "utf8",
+});
+if (result.status !== 0) {
+  process.stderr.write(result.stderr || "how-can-i failed");
+  process.exit(result.status || 1);
+}
+console.log(JSON.stringify({ type: "thread.started", thread_id: "codex-session-1" }));
+console.log(JSON.stringify({ type: "item.completed", item: { type: "agent_message", text: "hello" } }));
+console.log(JSON.stringify({ type: "turn.completed", usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1 } }));
+`;
+  await fs.writeFile(commandPath, script, "utf8");
+  await fs.chmod(commandPath, 0o755);
+}
+
+async function writeFakePnpmCommand(commandPath: string): Promise<void> {
+  const script = `#!/usr/bin/env node
+const fs = require("node:fs");
+const capturePath = process.env.PAPERCLIP_TEST_ARGS_PATH;
+if (capturePath) {
+  fs.writeFileSync(
+    capturePath,
+    JSON.stringify({ argv: process.argv.slice(2), cwd: process.cwd() }),
+    "utf8",
+  );
+}
+`;
+  await fs.writeFile(commandPath, script, "utf8");
+  await fs.chmod(commandPath, 0o755);
+}
+
 type CapturePayload = {
   argv: string[];
   prompt: string;
@@ -915,6 +951,80 @@ describe("codex execute", () => {
       else process.env.PAPERCLIP_IN_WORKTREE = previousPaperclipInWorktree;
       if (previousCodexHome === undefined) delete process.env.CODEX_HOME;
       else process.env.CODEX_HOME = previousCodexHome;
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("exposes bare how-can-i from a non-knowledge workspace", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-codex-how-can-i-"));
+    const workspace = path.join(root, "workspace");
+    const knowledgeRepo = path.join(root, "knowlege");
+    const binDir = path.join(root, "bin");
+    const commandPath = path.join(root, "codex");
+    const argsCapturePath = path.join(root, "args-capture.json");
+    await fs.mkdir(workspace, { recursive: true });
+    await fs.mkdir(knowledgeRepo, { recursive: true });
+    await fs.mkdir(binDir, { recursive: true });
+    await fs.writeFile(
+      path.join(knowledgeRepo, "package.json"),
+      JSON.stringify({
+        name: "knowledge-base",
+        private: true,
+        scripts: { knowledge: "echo ok" },
+      }),
+      "utf8",
+    );
+    await writeFakeCodexCommandThatCallsHowCanI(commandPath);
+    await writeFakePnpmCommand(path.join(binDir, "pnpm"));
+
+    try {
+      const result = await execute({
+        runId: "run-how-can-i",
+        agent: {
+          id: "agent-1",
+          companyId: "company-1",
+          name: "Codex Coder",
+          adapterType: "codex_local",
+          adapterConfig: {},
+        },
+        runtime: {
+          sessionId: null,
+          sessionParams: null,
+          sessionDisplayId: null,
+          taskKey: null,
+        },
+        config: {
+          command: commandPath,
+          cwd: workspace,
+          env: {
+            PAPERCLIP_TEST_ARGS_PATH: argsCapturePath,
+            PAPERCLIP_HOW_CAN_I_HELPER_DIR: binDir,
+            PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
+          },
+          promptTemplate: "Follow the paperclip heartbeat.",
+        },
+        context: {},
+        authToken: "run-jwt-token",
+        onLog: async () => {},
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.errorMessage).toBeNull();
+      const captured = JSON.parse(await fs.readFile(argsCapturePath, "utf8")) as {
+        argv: string[];
+        cwd: string;
+      };
+      expect(await fs.realpath(captured.cwd)).toBe(await fs.realpath(workspace));
+      expect(captured.argv).toEqual([
+        "--dir",
+        knowledgeRepo,
+        "knowledge",
+        "how-can-i",
+        "where",
+        "is",
+        "policy",
+      ]);
+    } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
   });

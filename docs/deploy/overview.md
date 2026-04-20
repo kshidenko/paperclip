@@ -53,3 +53,9 @@ Or update it later:
 ```sh
 pnpm paperclipai configure --section server
 ```
+
+## Operational Runbooks
+
+- [Environment Variables](/deploy/environment-variables)
+- [Secrets Management](/deploy/secrets)
+- [Guardrail Ops](/deploy/guardrail-ops)

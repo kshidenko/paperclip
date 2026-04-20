@@ -1,0 +1,126 @@
+- id: fact-001
+  category: competitive_intelligence
+  title: "Bing is the primary pipeline for ChatGPT visibility"
+  content: "87% of SearchGPT citations match Bing's top organic results. Google only 56% match. ChatGPT simplifies complex queries before searching Bing. GPT memory has zero impact on citation patterns."
+  source: "Seer Interactive (Feb 2025) + SEL case study (Apr 6, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Bing rank tracking is CRITICAL. Must also track simplified query variants in Bing, not just exact-match queries."
+
+- id: fact-002
+  category: market_research
+  title: "AI search adoption skews heavily toward high-income households"
+  content: "ChatGPT regular usage: £25-30k ~18%, £50-60k ~30%, £70-80k ~49%, £100k+ ~48-58%. High-income 2-3x more likely to use ChatGPT."
+  source: "Reflect Digital research via SEL (Apr 13, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Validates B2B premium positioning. Target AI-first, high-income decision-makers."
+
+- id: fact-003
+  category: competitive_intelligence
+  title: "Google Web Guide is a click-friendly AI SERP experiment"
+  content: "Google Web Guide uses query fan-out like AI Mode/AIOs but presents results as clickable link cards under themed headers. Every result is clickable. Uses FastSearch/RankEmbed. Cheaper than full AI answers. Solves Google's ad revenue problem. Currently Search Labs opt-in."
+  source: "Ahrefs blog (Mar 26, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "New optimization surface. Topical cluster detection and optimization. First-mover advantage if Web Guide graduates from Search Labs."
+
+- id: fact-004
+  category: competitive_intelligence
+  title: "AI summaries drive SEO impact; AI buttons do not"
+  content: "AI summaries + buttons: +116% impressions, +36% clicks. Buttons alone: +5% impressions, -17% clicks. Site-wide: 79.4% impression increase with only 15% of content having summaries."
+  source: "Leite's Culinaria case study via SEL (Apr 13, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Autopilot should auto-generate TL;DR summaries. This is a concrete, defensible feature no competitor automates."
+
+- id: fact-005
+  category: competitive_intelligence
+  title: "Profound silent 15+ days as of Apr 14 — NOW BROKEN SILENCE"
+  content: "Profound's last blog post was March 31. Zero output since April 8 Zero Click SF event. BUT: homepage now shows Agents product launch. Profound broke silence with autonomous agents."
+  source: "Direct observation"
+  status: superseded
+  discovered: "2026-04-14"
+  superseded_by: "fact-006"
+  product_implication: "Profound now claims autonomous agents. Differentiator under direct threat."
+
+- id: fact-006
+  category: competitive_intelligence
+  title: "Profound launches semi-autonomous Agents product — CRITICAL+ threat"
+  content: "Profound's homepage features Agents as core product pillar. Five agent types: AEO & SEO Agent, Content & Demand Agent, PR & Communications Agent, Brand Agent, Demand Gen Agent. Live FAQ Generator demo. Zero Click NY June 11. DEEP-DIVE FINDING: Agents are human-initiated workflow pipelines (Scrape→Analyze→Generate→Publish), NOT continuous autonomous loops. They can publish to WordPress/Contentful/Sanity but require human trigger. No closed-loop feedback. No technical SEO modification. No Bing optimization. MCP server for Claude Code/Cursor integration. Python/JS SDKs. Agent Engineering certification program. Platform risk: infrastructure exists to evolve toward autonomy."
+  source: "askprofound.com homepage + docs.tryprofound.com (Apr 14, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Threat held at CRITICAL+ (not EXISTENTIAL). Differentiator updated: 'Workflow automation isn't enough. Continuous autonomous optimization is the future.' Three concrete differentiators vs Profound: autonomous trigger, closed-loop, broader scope."
+
+- id: fact-007
+  category: market_research
+  title: "AI crawlers ignore .md files and most can't read schema markup"
+  content: "OtterlyAI experiments (14-day, 3-month): .md files get zero AI crawler visits and zero citations. 6/7 AI platforms cannot fetch schema markup (only Gemini can). Google AI Mode hallucinated schema types. Schema contributes to AI visibility only indirectly via SEO → rich results → organic authority."
+  source: "OtterlyAI experiments (Apr 1, Mar 23, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Don't waste autopilot cycles on .md mirrors or schema-as-GEO. Focus on HTML quality, structure, entity clarity. Schema stays on SEO checklist only."
+
+- id: fact-008
+  category: market_research
+  title: "Top AI citation sources: Reddit #1, YouTube #2, LinkedIn #3"
+  content: "Peec AI analyzed 30M sources across 5 AI platforms. Top 10 cited domains: Reddit, YouTube, LinkedIn, Wikipedia, Forbes, G2, Yelp, Facebook, Medium, Techradar. Platform divergence: ChatGPT favors Wikipedia/Forbes; Google favors YouTube/Facebook/Yelp; Perplexity favors Reddit/LinkedIn/G2. Facebook blocks Perplexity bots."
+  source: "Peec AI (Mar 31, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "External citation strategy priority: Reddit → YouTube → LinkedIn → Wikipedia → review sites. Platform-specific optimization differs. Don't treat all AI engines the same."
+
+- id: fact-009
+  category: market_research
+  title: "ChatGPT Merchant Program and Perplexity Buy with Pro bypass SEO/GEO"
+  content: "ChatGPT Merchant Program allows live product feeds + Instant Checkout via Agentic Commerce Protocol. Perplexity Buy with Pro enables purchases inside AI responses. Both bypass traditional SEO/GEO mechanics. AI won't just recommend — it will complete purchases."
+  source: "OtterlyAI schema experiment (Mar 23, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "New optimization surface: AI Merchant Programs. Autopilot should monitor product feed integration, track AI commerce conversions, auto-optimize feeds."
+
+- id: fact-010
+  category: competitive_intelligence
+  title: "Profound MCP server creates developer workflow lock-in"
+  content: "Profound has a full Model Context Protocol (MCP) server enabling Claude Code, Cursor, VS Code, Windsurf, and OpenCode users to query Profound data directly. Python and JavaScript SDKs. WordPress plugin. Shopify integration. Agent Engineering certification via Profound University. This creates developer ecosystem lock-in — teams integrating Profound MCP into their workflows have high switching costs."
+  source: "docs.tryprofound.com/agent-apis/mcp/overview (Apr 14, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "We should build our own MCP server (Rec #13). MCP is a distribution channel, not just a feature. Profound's developer ecosystem is a moat we must counter."
+
+- id: fact-011
+  category: competitive_intelligence
+  title: "Semrush claims agentic web thought leadership — Delegate Economy framework"
+  content: "Semrush published trilogy on agentic web (Mar 11-30, 2026): The Agentic Web, What Is an AI Agent, WebMCP guide. Introduces 'Delegate Economy' — AI agents handle discovery/evaluation/shortlisting, human becomes approver. Distinguishes agentic reasoning vs agentic action. Defines brand visibility as Legibility (can agent extract info?) + Authority (evidence you're better). Positions visibility stack as: SEO → AI Visibility → Agent Readiness. Protocol timeline: MCP→A2A→ACP→WebMCP→UCP→AAIF. Browser agents shipping: Chrome Auto Browse, Atlas, Comet, Disco. OpenAI shifted from native checkout to redirecting (Mar 2026)."
+  source: "semrush.com/blog/the-agentic-web/, semrush.com/blog/what-is-an-ai-agent/, semrush.com/blog/webmcp/ (Mar 11-30, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Semrush threat elevated to CRITICAL. They are defining market frameworks. We should adopt and extend their visibility stack by adding 4th layer: Autonomous Optimization. Frame our product as: Semrush tells you where you stand. We make you stand better. Autonomously."
+
+- id: fact-012
+  category: market_research
+  title: "WebMCP is live in Chrome 146 behind feature flag"
+  content: "WebMCP (Web Model Context Protocol) is a W3C standard backed by Google Chrome + Microsoft Edge teams. Live behind feature flag in Chrome 146 (chrome://flags/#enable-webmcp-testing). Two APIs: Declarative (add toolname/tooldescription attributes to HTML forms for instant agent compatibility) and Imperative (register tools via navigator.modelContext in JavaScript). Model Context Tool Inspector extension in Chrome Web Store. Google live demo: Flight search. Broader browser support expected mid-to-late 2026. Semrush calls this 'the responsive design moment for AI.'"
+  source: "semrush.com/blog/webmcp/ (Mar 11, 2026) + Chrome Web Store"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Rec #7 (WebMCP Readiness Audits) elevated from MEDIUM to HIGH. Autopilot should: (1) audit client forms for WebMCP readiness, (2) auto-generate Declarative API attributes, (3) monitor WebMCP tool discovery and usage."
+
+- id: fact-013
+  category: market_research
+  title: "AI summaries are the highest-impact GEO tactic measured — AI buttons are secondary"
+  content: "Leite's Culinaria 9-month data (June 2025 - Mar 2026): AI summaries + buttons = +116% impressions, +36% clicks. Buttons alone = +5% impressions, -17% clicks. Site-wide: only 15% of content has summaries, yet +79.4% total impressions, +10.9% clicks. AI referral traffic: ChatGPT +691%, Gemini +498%, Perplexity +21% YoY (but still small fraction of Google). Users use buttons for tasks (substitutions, scaling, dietary mods), not summaries. Microsoft AI Recommendation Poisoning warning (Feb 2026): hidden prompts = deception; transparent user-initiated buttons = fine. Personal LLM memory is per-user only, does not retrain model or change global rankings."
+  source: "SEL (Apr 13, 2026) + Leite's Culinaria case study"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Rec #2 (AI Summary Generation) is highest-impact feature. Auto-generate TL;DR summaries for client pages — data-proven, defensible, no competitor automates this. AI buttons are secondary UX feature."
+
+- id: fact-014
+  category: competitive_intelligence
+  title: "Profound has full CDN integration stack — first-party AI traffic data advantage"
+  content: "Profound Agent Analytics integrates with 9+ CDN/hosting platforms: Cloudflare (Worker + Logpush), Vercel, Amazon CloudFront, Fastly, Netlify, Akamai, Google Cloud CDN, WordPress Plugin, Shopify, Custom Integration. They see actual AI agent crawl patterns at the network level — first-party traffic data that query simulation cannot replicate."
+  source: "docs.tryprofound.com (Apr 14, 2026)"
+  status: active
+  discovered: "2026-04-14"
+  product_implication: "Profound has infrastructure advantage in first-party AI traffic data. We should consider CDN log ingestion or CDN partnerships to get comparable data. Also: Profound docs include llms.txt for AI-crawable documentation index."

@@ -48,3 +48,17 @@ These are set automatically by the server when invoking agents:
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | Anthropic API key (for Claude Local adapter) |
 | `OPENAI_API_KEY` | OpenAI API key (for Codex Local adapter) |
+
+## Inbound Guardrail (GROQ) Ops Controls
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `INBOUND_GUARDRAIL_GROQ_API_KEY` | (fallback to `GROQ_API_KEY`) | Dedicated API key for `/api/guardrails/prefilter` classifier calls |
+| `INBOUND_GUARDRAIL_GROQ_MODEL` | `llama-3.3-70b-versatile` | GROQ model used by inbound prompt-injection classifier |
+| `INBOUND_GUARDRAIL_GROQ_API_BASE` | `https://api.groq.com/openai/v1` | GROQ-compatible API base URL override |
+| `INBOUND_GUARDRAIL_TIMEOUT_MS` | `8000` | Request timeout for classifier calls |
+| `INBOUND_GUARDRAIL_FAIL_MODE` | `block` | Failure policy when classifier is unavailable: `block` (fail-closed) or `allow` (fail-open) |
+| `INBOUND_GUARDRAIL_BYPASS_IDENTIFIERS` | `kirill` | Comma-separated bypass identifiers matched against sender id/email/handle/name |
+| `INBOUND_GUARDRAIL_KIRILL_EMAILS` | (empty) | Optional explicit Kirill bypass emails (comma-separated) |
+
+See [Guardrail Ops](/deploy/guardrail-ops) for monitoring and alert thresholds.

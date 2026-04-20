@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { constants as fsConstants, promises as fs, type Dirent } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import type {
   AdapterSkillEntry,
@@ -42,6 +43,7 @@ const PAPERCLIP_SKILL_ROOT_RELATIVE_CANDIDATES = [
   "../../skills",
   "../../../../../skills",
 ];
+const KNOWLEDGE_REPO_CANDIDATE_NAMES = ["knowlege", "knowledge", "knowledge-base"];
 
 export interface PaperclipSkillEntry {
   key: string;
@@ -612,6 +614,218 @@ export function ensurePathInEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   if (typeof env.PATH === "string" && env.PATH.length > 0) return env;
   if (typeof env.Path === "string" && env.Path.length > 0) return env;
   return { ...env, PATH: defaultPathForPlatform() };
+}
+
+function uniqueNonEmpty(values: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    out.push(trimmed);
+  }
+  return out;
+}
+
+function collectAncestorDirs(start: string): string[] {
+  const out: string[] = [];
+  let current = path.resolve(start);
+  while (true) {
+    out.push(current);
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return out;
+}
+
+async function listDirectoryChildren(root: string, limit = 32): Promise<string[]> {
+  const entries = await fs.readdir(root, { withFileTypes: true }).catch(() => []);
+  const out: string[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    out.push(path.join(root, entry.name));
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+async function collectHomeKnowledgeCandidates(env: NodeJS.ProcessEnv): Promise<string[]> {
+  const homeDir = env.HOME ?? process.env.HOME ?? os.homedir();
+  if (!homeDir) return [];
+
+  const searchRoots = uniqueNonEmpty([
+    path.join(homeDir, "projects"),
+    path.join(homeDir, "code"),
+    path.join(homeDir, "src"),
+  ]);
+
+  const candidates: string[] = [];
+  for (const root of searchRoots) {
+    for (const repoName of KNOWLEDGE_REPO_CANDIDATE_NAMES) {
+      candidates.push(path.join(root, repoName));
+    }
+
+    const firstLevel = await listDirectoryChildren(root, 64);
+    for (const firstDir of firstLevel) {
+      for (const repoName of KNOWLEDGE_REPO_CANDIDATE_NAMES) {
+        candidates.push(path.join(firstDir, repoName));
+      }
+
+      const secondLevel = await listDirectoryChildren(firstDir, 24);
+      for (const secondDir of secondLevel) {
+        for (const repoName of KNOWLEDGE_REPO_CANDIDATE_NAMES) {
+          candidates.push(path.join(secondDir, repoName));
+        }
+      }
+    }
+  }
+
+  return uniqueNonEmpty(candidates);
+}
+
+async function directoryHasKnowledgeScript(candidate: string): Promise<boolean> {
+  const packageJsonPath = path.join(candidate, "package.json");
+  const packageJsonText = await fs.readFile(packageJsonPath, "utf8").catch(() => null);
+  if (!packageJsonText) return false;
+  const parsed = parseJson(packageJsonText);
+  const scripts = parseObject(parsed?.scripts);
+  return typeof scripts.knowledge === "string" && scripts.knowledge.trim().length > 0;
+}
+
+async function resolveKnowledgeRepoDir(input: {
+  env: NodeJS.ProcessEnv;
+  moduleDir?: string;
+  workspaceCwd?: string;
+}): Promise<string | null> {
+  const explicitCandidates = uniqueNonEmpty([
+    input.env.PAPERCLIP_KNOWLEDGE_REPO_DIR,
+    process.env.PAPERCLIP_KNOWLEDGE_REPO_DIR,
+    input.env.PAPERCLIP_KNOWLEDGE_BASE_DIR,
+    process.env.PAPERCLIP_KNOWLEDGE_BASE_DIR,
+  ]);
+  for (const candidate of explicitCandidates) {
+    const resolved = path.resolve(candidate);
+    if (await directoryHasKnowledgeScript(resolved)) return resolved;
+  }
+
+  const hintRoots = uniqueNonEmpty([input.workspaceCwd, input.moduleDir, process.cwd()]);
+  const inferredCandidates: string[] = [];
+  for (const hint of hintRoots) {
+    for (const ancestor of collectAncestorDirs(hint)) {
+      inferredCandidates.push(ancestor);
+      for (const repoName of KNOWLEDGE_REPO_CANDIDATE_NAMES) {
+        inferredCandidates.push(path.join(ancestor, repoName));
+      }
+    }
+  }
+  for (const candidate of uniqueNonEmpty(inferredCandidates)) {
+    if (await directoryHasKnowledgeScript(candidate)) return candidate;
+  }
+
+  const homeCandidates = await collectHomeKnowledgeCandidates(input.env);
+  for (const candidate of homeCandidates) {
+    if (await directoryHasKnowledgeScript(candidate)) return candidate;
+  }
+  return null;
+}
+
+function prependPathEntry(pathValue: string, entry: string): string {
+  const delimiter = path.delimiter;
+  const current = pathValue.split(delimiter).filter(Boolean);
+  if (current.includes(entry)) return pathValue;
+  return [entry, ...current].join(delimiter);
+}
+
+function escapeSingleQuotes(value: string): string {
+  return value.replace(/'/g, "'\"'\"'");
+}
+
+export interface InjectHowCanIHelperOptions {
+  env: Record<string, string>;
+  moduleDir?: string;
+  workspaceCwd?: string;
+}
+
+export interface InjectHowCanIHelperResult {
+  env: Record<string, string>;
+  commandName: "how-can-i";
+  commandPath: string | null;
+  repoDir: string | null;
+  available: boolean;
+}
+
+function resolveConfiguredHelperDir(env: NodeJS.ProcessEnv): string | null {
+  const explicit = uniqueNonEmpty([
+    env.PAPERCLIP_HOW_CAN_I_HELPER_DIR,
+    process.env.PAPERCLIP_HOW_CAN_I_HELPER_DIR,
+  ])[0];
+  if (explicit) return path.resolve(explicit);
+  if (process.platform === "win32") return null;
+  const homeDir = env.HOME ?? process.env.HOME ?? os.homedir();
+  return path.join(homeDir, ".local", "bin");
+}
+
+export async function injectHowCanIHelper(
+  options: InjectHowCanIHelperOptions,
+): Promise<InjectHowCanIHelperResult> {
+  const commandName: "how-can-i" = "how-can-i";
+  const merged = ensurePathInEnv({ ...process.env, ...options.env });
+  const nextEnv = Object.fromEntries(
+    Object.entries(merged).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+  );
+  const repoDir = await resolveKnowledgeRepoDir({
+    env: nextEnv,
+    moduleDir: options.moduleDir,
+    workspaceCwd: options.workspaceCwd,
+  });
+  if (!repoDir) {
+    return {
+      env: nextEnv,
+      commandName,
+      commandPath: null,
+      repoDir: null,
+      available: false,
+    };
+  }
+
+  const isWindows = process.platform === "win32";
+  const configuredHelperDir = resolveConfiguredHelperDir(nextEnv);
+  let helperDir: string;
+  if (configuredHelperDir) {
+    try {
+      await fs.mkdir(configuredHelperDir, { recursive: true });
+      helperDir = configuredHelperDir;
+    } catch {
+      helperDir = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-how-can-i-"));
+    }
+  } else {
+    helperDir = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-how-can-i-"));
+  }
+  const commandPath = path.join(helperDir, isWindows ? `${commandName}.cmd` : commandName);
+  const script = isWindows
+    ? `@echo off\r\npnpm --dir "${repoDir}" knowledge how-can-i %*\r\n`
+    : `#!/usr/bin/env sh\nset -eu\nexec pnpm --dir '${escapeSingleQuotes(repoDir)}' knowledge how-can-i "$@"\n`;
+  await fs.writeFile(commandPath, script, "utf8");
+  if (!isWindows) {
+    await fs.chmod(commandPath, 0o755);
+  }
+
+  nextEnv.PATH = prependPathEntry(nextEnv.PATH ?? "", helperDir);
+  nextEnv.PAPERCLIP_HOW_CAN_I_COMMAND = commandPath;
+  nextEnv.PAPERCLIP_HOW_CAN_I_COMMAND_BASENAME = commandName;
+  nextEnv.PAPERCLIP_HOW_CAN_I_REPO_DIR = repoDir;
+  nextEnv.PAPERCLIP_HOW_CAN_I_FALLBACK = `pnpm --dir '${escapeSingleQuotes(repoDir)}' knowledge how-can-i`;
+
+  return {
+    env: nextEnv,
+    commandName,
+    commandPath,
+    repoDir,
+    available: true,
+  };
 }
 
 export async function ensureAbsoluteDirectory(

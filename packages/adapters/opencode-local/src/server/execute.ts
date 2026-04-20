@@ -15,6 +15,7 @@ import {
   ensureCommandResolvable,
   ensurePaperclipSkillSymlink,
   ensurePathInEnv,
+  injectHowCanIHelper,
   resolveCommandForLogs,
   renderTemplate,
   renderPaperclipWakePrompt,
@@ -183,7 +184,14 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   if (!hasExplicitApiKey && authToken) {
     env.PAPERCLIP_API_KEY = authToken;
   }
-  const preparedRuntimeConfig = await prepareOpenCodeRuntimeConfig({ env, config });
+  const envWithHowCanI = (
+    await injectHowCanIHelper({
+      env,
+      moduleDir: __moduleDir,
+      workspaceCwd: cwd,
+    })
+  ).env;
+  const preparedRuntimeConfig = await prepareOpenCodeRuntimeConfig({ env: envWithHowCanI, config });
   try {
     const runtimeEnv = Object.fromEntries(
       Object.entries(ensurePathInEnv({ ...process.env, ...preparedRuntimeConfig.env })).filter(
